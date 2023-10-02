@@ -1,10 +1,11 @@
 mod config;
 mod discord;
 mod event_handler;
+mod storage;
 
 #[tokio::main]
 async fn main() {
-    let handler = event_handler::new();
+    let handler = event_handler::new().await;
     let mut bot = discord::create_bot(handler).await;
 
     if let Err(why) = bot.start().await {
