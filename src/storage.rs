@@ -25,7 +25,7 @@ impl SqliteStorage {
     pub async fn new() -> Result<SqliteStorage, Box<dyn Error>> {
         let config = config::global();
         let options = SqliteConnectOptions::new()
-            .filename(format!("./{}", config.db_name))
+            .filename(format!("./data/{}", config.db_name))
             .create_if_missing(true);
         let conn = SqlitePoolOptions::new().connect_with(options).await?;
 

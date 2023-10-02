@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT name, birthday FROM birthdays",
+  "describe": {
+    "columns": [
+      {
+        "name": "name",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "birthday",
+        "ordinal": 1,
+        "type_info": "Date"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "69bea3e04412f4a3be7d248e5512a9ce3789cacf1d4873dd93d871b7c9bd394d"
+}
