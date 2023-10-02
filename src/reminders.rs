@@ -42,7 +42,6 @@ async fn send_birthday_reminder(name: &str, days_until_birthday: i64) {
     let cache = CACHE.get_or_init(setup_cache);
     let cache_key = format!("{}-{}", name, days_until_birthday);
     if cache.get(&cache_key).is_some() {
-        println!("Skipping birthday reminder for {} (already sent)", name);
         return;
     }
 

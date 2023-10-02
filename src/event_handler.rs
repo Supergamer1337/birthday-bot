@@ -1,7 +1,4 @@
-use crate::{
-    commands,
-    storage::{self, Storage},
-};
+use crate::{commands, storage::Storage};
 use serenity::{
     async_trait,
     model::prelude::{application_command::ApplicationCommandInteraction, command::Command, *},

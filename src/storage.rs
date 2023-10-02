@@ -1,6 +1,10 @@
+use crate::config;
 use chrono::NaiveDate;
 use serenity::async_trait;
-use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
+use sqlx::{
+    sqlite::{SqliteConnectOptions, SqlitePoolOptions},
+    Pool, Sqlite,
+};
 use std::{error::Error, sync::Arc};
 
 #[derive(Debug)]
@@ -19,8 +23,14 @@ pub struct SqliteStorage {
 
 impl SqliteStorage {
     pub async fn new() -> Result<SqliteStorage, Box<dyn Error>> {
-        let database_url = dotenvy::var("DATABASE_URL")?;
-        let conn = SqlitePoolOptions::new().connect(&database_url).await?;
+        let config = config::global();
+        let options = SqliteConnectOptions::new()
+            .filename(format!("./{}", config.db_name))
+            .create_if_missing(true);
+        let conn = SqlitePoolOptions::new().connect_with(options).await?;
+
+        sqlx::migrate!("./migrations").run(&conn).await?;
+
         Ok(SqliteStorage { conn })
     }
 

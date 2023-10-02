@@ -3,6 +3,7 @@ use std::sync::OnceLock;
 pub struct Config {
     pub discord_token: String,
     pub channel_id_to_post_reminders: u64,
+    pub db_name: String,
 }
 
 pub fn global() -> &'static Config {
@@ -23,9 +24,12 @@ impl Config {
             .parse::<u64>()
             .expect("CHANNEL_ID_TO_POST_REMINDERS is not an integer. Please set CHANNEL_ID_TO_POST_REMINDERS to an integer.");
 
+        let db_name = dotenvy::var("DB_NAME").unwrap_or("birthdays.db".to_string());
+
         Self {
             discord_token,
             channel_id_to_post_reminders,
+            db_name,
         }
     }
 }

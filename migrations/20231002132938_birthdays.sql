@@ -1,6 +1,5 @@
 -- Add migration script here
 CREATE TABLE birthdays (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
+  name VARCHAR(255) PRIMARY KEY NOT NULL,
   birthday DATE NOT NULL
 );
