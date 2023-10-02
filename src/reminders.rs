@@ -4,6 +4,7 @@ use crate::{
 };
 use chrono::{Datelike, NaiveDate};
 use clokwerk::{AsyncScheduler, TimeUnits};
+use moka::sync::Cache;
 use serenity::model::prelude::ChannelId;
 use std::{
     sync::{Arc, OnceLock},
@@ -11,6 +12,7 @@ use std::{
 };
 
 static SCHEDULER_STORAGE: OnceLock<Arc<dyn Storage>> = OnceLock::new();
+static CACHE: OnceLock<Cache<String, bool>> = OnceLock::new();
 
 pub async fn schedule_tasks(storage: Arc<dyn Storage>) {
     if let Err(_) = SCHEDULER_STORAGE.set(storage) {
@@ -37,6 +39,13 @@ pub async fn schedule_tasks(storage: Arc<dyn Storage>) {
 }
 
 async fn send_birthday_reminder(name: &str, days_until_birthday: i64) {
+    let cache = CACHE.get_or_init(setup_cache);
+    let cache_key = format!("{}-{}", name, days_until_birthday);
+    if cache.get(&cache_key).is_some() {
+        println!("Skipping birthday reminder for {} (already sent)", name);
+        return;
+    }
+
     let config = config::global();
     let http = discord::get_http_context();
     let message_channel = ChannelId(config.channel_id_to_post_reminders);
@@ -51,6 +60,8 @@ async fn send_birthday_reminder(name: &str, days_until_birthday: i64) {
 
     if let Err(why) = message_channel.say(http, message).await {
         println!("Failed to send birthday reminder for {}: {}", name, why);
+    } else {
+        cache.insert(cache_key, true);
     }
 }
 
@@ -92,4 +103,10 @@ fn days_until_next_occurrence(date: &NaiveDate) -> Option<i64> {
         let days_until_birthday_next_year = date_next_year.signed_duration_since(today).num_days();
         Some(days_until_birthday_next_year)
     }
+}
+
+fn setup_cache() -> Cache<String, bool> {
+    Cache::builder()
+        .time_to_live(Duration::from_secs(60 * 60 * 24))
+        .build()
 }
