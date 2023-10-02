@@ -50,10 +50,10 @@ async fn send_birthday_reminder(name: &str, days_until_birthday: i64) {
     let message_channel = ChannelId(config.channel_id_to_post_reminders);
 
     let message = match days_until_birthday {
-        0 => format!("It's {}'s birthday today!", name),
-        1 => format!("It's {}'s birthday tomorrow!", name),
-        3 => format!("It's {}'s birthday in 3 days!", name),
-        7 => format!("It's {}'s birthday in a week!", name),
+        0 => format!("It is {} birthday today!", name),
+        1 => format!("It is {}'s birthday tomorrow!", name),
+        3 => format!("In 3 days, {} has their birthday!", name),
+        7 => format!("In one week, {} has their birthday!", name),
         _ => return,
     };
 
