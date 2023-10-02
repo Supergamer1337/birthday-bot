@@ -3,11 +3,13 @@ use serenity::async_trait;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
 use std::error::Error;
 
+pub struct Birthday(pub String, pub NaiveDate);
+
 #[async_trait]
 pub trait Storage: Send + Sync {
     async fn add_birthday(&self, name: &str, date: NaiveDate) -> Result<(), Box<dyn Error>>;
     async fn remove_birthday(&self, name: &str) -> Result<(), Box<dyn Error>>;
-    async fn get_birthdays(&self) -> Result<Vec<(String, NaiveDate)>, Box<dyn Error>>;
+    async fn get_birthdays(&self) -> Result<Vec<Birthday>, Box<dyn Error>>;
 }
 
 pub struct SqliteStorage {
@@ -42,15 +44,13 @@ impl Storage for SqliteStorage {
         Ok(())
     }
 
-    async fn get_birthdays(&self) -> Result<Vec<(String, NaiveDate)>, Box<dyn Error>> {
+    async fn get_birthdays(&self) -> Result<Vec<Birthday>, Box<dyn Error>> {
         let birthdays = sqlx::query!("SELECT name, birthday FROM birthdays")
             .fetch_all(&self.conn)
-            .await?;
-
-        let birthdays = birthdays
+            .await?
             .into_iter()
-            .map(|b| (b.name, b.birthday))
-            .collect();
+            .map(|b| Birthday(b.name, b.birthday))
+            .collect::<Vec<_>>();
 
         Ok(birthdays)
     }
