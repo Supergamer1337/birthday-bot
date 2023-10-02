@@ -64,12 +64,6 @@ impl EventHandler for Handler {
     }
 }
 
-pub async fn new() -> Handler {
-    let storage = storage::SqliteStorage::new()
-        .await
-        .expect("Failed to create storage");
-
-    Handler {
-        storage: Arc::new(storage),
-    }
+pub async fn new(storage: Arc<dyn Storage>) -> Handler {
+    Handler { storage }
 }

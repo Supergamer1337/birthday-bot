@@ -1,8 +1,9 @@
 use chrono::NaiveDate;
 use serenity::async_trait;
 use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
-use std::error::Error;
+use std::{error::Error, sync::Arc};
 
+#[derive(Debug)]
 pub struct Birthday(pub String, pub NaiveDate);
 
 #[async_trait]
@@ -21,6 +22,11 @@ impl SqliteStorage {
         let database_url = dotenvy::var("DATABASE_URL")?;
         let conn = SqlitePoolOptions::new().connect(&database_url).await?;
         Ok(SqliteStorage { conn })
+    }
+
+    pub async fn arc() -> Result<Arc<SqliteStorage>, Box<dyn Error>> {
+        let storage = Self::new().await?;
+        Ok(Arc::new(storage))
     }
 }
 
