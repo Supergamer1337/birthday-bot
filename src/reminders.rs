@@ -20,7 +20,7 @@ pub async fn schedule_tasks(storage: Arc<dyn Storage>) {
     }
 
     let mut scheduler = AsyncScheduler::new();
-    scheduler.every(10.seconds()).run(|| {
+    scheduler.every(30.minutes()).run(|| {
         // I couldn't expect here, so I used unwrap
         // I don't know if this is the best way to do this
         // But it's the only way I could think of to get around the lifetime issues
