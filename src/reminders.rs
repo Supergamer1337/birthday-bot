@@ -60,7 +60,10 @@ async fn send_birthday_reminder(name: &str, days_until_birthday: i64, age: Optio
         1 => format!("It is {}'s birthday tomorrow!", name),
         3 => format!("In 3 days, {} has their birthday!", name),
         7 => format!("In one week, {} has their birthday!", name),
-        _ => return,
+        _ => {
+            cache.insert(cache_key, false);
+            return;
+        }
     }
     .add(&format!(" They will be {}!", age));
 
