@@ -1,4 +1,4 @@
-use crate::{commands, storage::Storage};
+use crate::{commands, storage::BirthdayStorage};
 use serenity::{
     async_trait,
     model::prelude::{application_command::ApplicationCommandInteraction, command::Command, *},
@@ -7,7 +7,7 @@ use serenity::{
 use std::sync::Arc;
 
 pub struct Handler {
-    storage: Arc<dyn Storage>,
+    storage: Arc<dyn BirthdayStorage>,
 }
 
 async fn handle_command(command: &ApplicationCommandInteraction, handler: &Handler) -> String {
@@ -61,6 +61,6 @@ impl EventHandler for Handler {
     }
 }
 
-pub async fn new(storage: Arc<dyn Storage>) -> Handler {
+pub async fn new(storage: Arc<dyn BirthdayStorage>) -> Handler {
     Handler { storage }
 }

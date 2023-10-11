@@ -6,9 +6,9 @@ use serenity::{
     model::prelude::{application_command::CommandDataOption, command::CommandOptionType},
 };
 
-use crate::storage::Storage;
+use crate::storage::BirthdayStorage;
 
-pub async fn run(options: &[CommandDataOption], storage: Arc<dyn Storage>) -> String {
+pub async fn run(options: &[CommandDataOption], storage: Arc<dyn BirthdayStorage>) -> String {
     let name = match options[0].value {
         Some(ref name) => name.to_string().replace("\"", ""),
         None => return "No name provided".to_string(),

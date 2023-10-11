@@ -11,7 +11,7 @@ use std::{error::Error, sync::Arc};
 pub struct Birthday(pub String, pub NaiveDate);
 
 #[async_trait]
-pub trait Storage: Send + Sync {
+pub trait BirthdayStorage: Send + Sync {
     async fn add_birthday(&self, name: &str, date: NaiveDate) -> Result<(), Box<dyn Error>>;
     async fn remove_birthday(&self, name: &str) -> Result<(), Box<dyn Error>>;
     async fn get_birthdays(&self) -> Result<Vec<Birthday>, Box<dyn Error>>;
@@ -41,7 +41,7 @@ impl SqliteStorage {
 }
 
 #[async_trait]
-impl Storage for SqliteStorage {
+impl BirthdayStorage for SqliteStorage {
     async fn add_birthday(&self, name: &str, date: NaiveDate) -> Result<(), Box<dyn Error>> {
         sqlx::query!(
             "INSERT INTO birthdays (name, birthday) VALUES (?, ?)",

@@ -4,9 +4,9 @@ use serenity::{
     builder::CreateApplicationCommand, model::prelude::application_command::CommandDataOption,
 };
 
-use crate::storage::{Birthday, Storage};
+use crate::storage::{Birthday, BirthdayStorage};
 
-pub async fn run(_options: &[CommandDataOption], storage: Arc<dyn Storage>) -> String {
+pub async fn run(_options: &[CommandDataOption], storage: Arc<dyn BirthdayStorage>) -> String {
     match storage.get_birthdays().await {
         Ok(list) => {
             if list.is_empty() {

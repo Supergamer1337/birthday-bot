@@ -1,26 +1,27 @@
 use crate::{
     config, discord,
-    storage::{Birthday, Storage},
+    storage::{Birthday, BirthdayStorage},
 };
 use chrono::{Datelike, NaiveDate};
 use clokwerk::{AsyncScheduler, TimeUnits};
 use moka::sync::Cache;
 use serenity::model::prelude::ChannelId;
 use std::{
+    ops::Add,
     sync::{Arc, OnceLock},
     time::Duration,
 };
 
-static SCHEDULER_STORAGE: OnceLock<Arc<dyn Storage>> = OnceLock::new();
+static SCHEDULER_STORAGE: OnceLock<Arc<dyn BirthdayStorage>> = OnceLock::new();
 static CACHE: OnceLock<Cache<String, bool>> = OnceLock::new();
 
-pub async fn schedule_tasks(storage: Arc<dyn Storage>) {
+pub async fn schedule_tasks(storage: Arc<dyn BirthdayStorage>) {
     if let Err(_) = SCHEDULER_STORAGE.set(storage) {
         panic!("Failed to set scheduler storage");
     }
 
     let mut scheduler = AsyncScheduler::new();
-    scheduler.every(30.minutes()).run(|| {
+    scheduler.every(30.seconds()).run(|| {
         // I couldn't expect here, so I used unwrap
         // I don't know if this is the best way to do this
         // But it's the only way I could think of to get around the lifetime issues
@@ -38,7 +39,7 @@ pub async fn schedule_tasks(storage: Arc<dyn Storage>) {
     });
 }
 
-async fn send_birthday_reminder(name: &str, days_until_birthday: i64) {
+async fn send_birthday_reminder(name: &str, days_until_birthday: i64, age: Option<u32>) {
     let cache = CACHE.get_or_init(setup_cache);
     let cache_key = format!("{}-{}", name, days_until_birthday);
     if cache.get(&cache_key).is_some() {
@@ -49,13 +50,19 @@ async fn send_birthday_reminder(name: &str, days_until_birthday: i64) {
     let http = discord::get_http_context();
     let message_channel = ChannelId(config.channel_id_to_post_reminders);
 
+    let age = match age {
+        Some(age) => format!("{} years old", age),
+        None => "unknown age".to_string(),
+    };
+
     let message = match days_until_birthday {
         0 => format!("It is {} birthday today!", name),
         1 => format!("It is {}'s birthday tomorrow!", name),
         3 => format!("In 3 days, {} has their birthday!", name),
         7 => format!("In one week, {} has their birthday!", name),
         _ => return,
-    };
+    }
+    .add(&format!(" They will be {}!", age));
 
     if let Err(why) = message_channel.say(http, message).await {
         println!("Failed to send birthday reminder for {}: {}", name, why);
@@ -64,7 +71,7 @@ async fn send_birthday_reminder(name: &str, days_until_birthday: i64) {
     }
 }
 
-async fn handle_reminders(storage: Arc<dyn Storage>) {
+async fn handle_reminders(storage: Arc<dyn BirthdayStorage>) {
     let birthdays = match storage.get_birthdays().await {
         Ok(birthdays) => birthdays,
         Err(why) => {
@@ -75,7 +82,12 @@ async fn handle_reminders(storage: Arc<dyn Storage>) {
 
     for Birthday(name, date) in birthdays.iter() {
         if let Some(days_until_birthday) = days_until_next_occurrence(date) {
-            send_birthday_reminder(name, days_until_birthday).await;
+            send_birthday_reminder(
+                name,
+                days_until_birthday,
+                calculate_age(*date, days_until_birthday),
+            )
+            .await;
         } else {
             println!("Failed to calculate days until birthday for {}", name);
         }
@@ -102,6 +114,16 @@ fn days_until_next_occurrence(date: &NaiveDate) -> Option<i64> {
         let days_until_birthday_next_year = date_next_year.signed_duration_since(today).num_days();
         Some(days_until_birthday_next_year)
     }
+}
+
+fn calculate_age(date_of_birth: NaiveDate, days_until_birthday: i64) -> Option<u32> {
+    let days_until_birthday = chrono::Days::new(days_until_birthday as u64);
+    let birthday = chrono::Local::now()
+        .naive_local()
+        .checked_add_days(days_until_birthday)
+        .and_then(|birthday| Some(birthday.date()))?;
+
+    birthday.years_since(date_of_birth)
 }
 
 fn setup_cache() -> Cache<String, bool> {
